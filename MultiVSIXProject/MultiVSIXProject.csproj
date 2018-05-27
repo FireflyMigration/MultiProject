@@ -37,8 +37,8 @@
     <WarningLevel>4</WarningLevel>
     <DeployExtension>True</DeployExtension>
     <CreateVsixContainer>True</CreateVsixContainer>
-    <CopyVsixExtensionFiles>True</CopyVsixExtensionFiles>
-    <CopyVsixExtensionLocation>vsix</CopyVsixExtensionLocation>
+    <CopyVsixExtensionFiles>False</CopyVsixExtensionFiles>
+    <CopyVsixExtensionLocation>build\bin\VSIXPackage</CopyVsixExtensionLocation>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -52,16 +52,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
-      </ItemGroup>
+  </ItemGroup>
   <ItemGroup>
-  
     <Content Include="index.html" />
     <Content Include="stylesheet.css" />
-   
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ClassOutline\ClassOutlinePackage.2017\ClassOutlineProject.2017.csproj">
