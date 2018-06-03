@@ -60,20 +60,6 @@
     <Content Include="index.html" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\ClassOutline\ClassOutlinePackage.2017\ClassOutlineProject.2017.csproj">
-      <Project>{5B5C010F-856B-435B-86CC-42037912FFF0}</Project>
-      <Name>ClassOutlineProject.2017</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3bPkgdefProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
-    </ProjectReference>
-    <ProjectReference Include="..\..\VSDropAssist\VSDropAssist\VSDropAssist.2017.csproj">
-      <Project>{C3633A05-E6E8-4417-95D7-8CEB2400170B}</Project>
-      <Name>VSDropAssist.2017</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3bPkgdefProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup>
