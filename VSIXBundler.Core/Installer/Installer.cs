@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.ExtensionManager;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Microsoft.VisualStudio.ExtensionManager;
 
 using VSIXBundler.Core.Helpers;
 
@@ -141,6 +141,22 @@ namespace VSIXBundler.Core.Installer
             });
         }
 
+        //Checks the version of the extension on the VS Gallery and downloads it if necessary.
+        private IInstallableExtension FetchIfUpdated(IInstalledExtension extension, IVsExtensionRepository repository, GalleryEntry entry)
+        {
+            var version = extension.Header.Version;
+            var strNewVersion = repository.GetCurrentExtensionVersions("ExtensionManagerQuery", new List<string>() { extension.Header.Identifier }, 1033).Single();
+            var newVersion = Version.Parse(strNewVersion);
+
+            if (newVersion > version)
+            {
+                var newestVersion = repository.Download(entry);
+                return newestVersion;
+            }
+
+            return null;
+        }
+
         private void InstallExtension(ExtensionEntry extension, IVsExtensionRepository repository, IVsExtensionManager manager)
         {
             GalleryEntry entry = null;
@@ -156,18 +172,31 @@ namespace VSIXBundler.Core.Installer
                 if (entry != null)
                 {
                     _logger.Log(_settings.ResourceProvider.Ok); // Marketplace ok
+
+                    var installed = manager.GetInstalledExtensions().Where(n => n.Header.Identifier == extension.Id).SingleOrDefault();
                     _logger.Log("  " + _settings.ResourceProvider.Downloading, false);
-#if !DEBUG
-                    IInstallableExtension installable = repository.Download(entry);
+                    IInstallableExtension installable = installed == null ? repository.Download(entry) : FetchIfUpdated(installed, repository, entry);
+
+                    if (installable == null)
+                    {
+                        _logger.Log(" nothing to do");
+                    }
+                    else
+                    {
+#if !DEBUG || true
+
 #endif
-                    _logger.Log(_settings.ResourceProvider.Ok); // Download ok
-                    _logger.Log("  " + _settings.ResourceProvider.Installing, false);
-#if !DEBUG
-                    manager.Install(installable, false);
+                        _logger.Log(_settings.ResourceProvider.Ok); // Download ok
+                        _logger.Log("  " + _settings.ResourceProvider.Installing, false);
+#if !DEBUG || true
+
+                        manager.Install(installable, false);
 #else
                     Thread.Sleep(2000);
 #endif
-                    _logger.Log(_settings.ResourceProvider.Ok); // Install ok
+                        _logger.Log(_settings.ResourceProvider.Ok); // Install ok
+                    }
+
                     Telemetry.Install(extension.Id, true);
                 }
                 else
@@ -175,7 +204,7 @@ namespace VSIXBundler.Core.Installer
                     _logger.Log(_settings.ResourceProvider.Failed); // Markedplace failed
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 _logger.Log(_settings.ResourceProvider.Failed);
                 Telemetry.Install(extension.Id, false);
