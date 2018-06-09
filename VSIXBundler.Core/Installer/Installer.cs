@@ -13,6 +13,10 @@ using ILogger = VSIXBundler.Core.Helpers.ILogger;
 
 namespace VSIXBundler.Core.Installer
 {
+    /*
+     * Copyright MadsKristensen https://github.com/madskristensen/WebEssentials2017
+     */
+
     public class Installer
     {
         private readonly ISettings _settings;
