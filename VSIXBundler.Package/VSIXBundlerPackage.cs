@@ -22,7 +22,10 @@ namespace VSIXBundler.Package
     internal class SettingsFactory
     {
         public string VSIXName = "Bundler";
-        public Uri LiveFeedUrl = new Uri("http://www.bbc.co.cuk");
+
+        //public Uri LiveFeedUrl = new Uri("https://raw.githubusercontent.com/stickleprojects/MultiProject/master/extensions.json");
+        public Uri LiveFeedUrl = new Uri("file://D://localGithub//MultiProject//extensions.json");
+
         public string RegistrySubKey => VSIXName;
 
         public ISettings Create()

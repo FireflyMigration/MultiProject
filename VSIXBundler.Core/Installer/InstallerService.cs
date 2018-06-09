@@ -1,9 +1,9 @@
-﻿using System;
-
-using Microsoft.VisualStudio.ComponentModelHost;
+﻿using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.ExtensionManager;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.TaskStatusCenter;
+
+using System;
 
 using VSIXBundler.Core.Helpers;
 
@@ -112,9 +112,9 @@ namespace VSIXBundler.Core.Installer
             }
         }
 
-        private static void OnInstallationDone(object sender, int count)
+        private static void OnInstallationDone(object sender, InstallResult results)
         {
-            if (!_handler.UserCancellation.IsCancellationRequested && count > 0)
+            if (!_handler.UserCancellation.IsCancellationRequested && results.MustRestart)
             {
                 VsHelpers.PromptForRestart(_settings);
             }
