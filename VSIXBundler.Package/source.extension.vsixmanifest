@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="VSIXBundler.Package.571da680-2721-47a3-bf7a-1d3bef21ab73" Version="1.0" Language="en-US" Publisher="kieron wray" />
-        <DisplayName>VSIXBundler.Package</DisplayName>
+        <Identity Id="VSIXBundler.Package.571da680-2721-47a3-bf7a-1d3bef21ab73" Version="1.1" Language="en-US" Publisher="kieron wray" />
+        <DisplayName>Firefly.VSIXBundler.Package</DisplayName>
         <Description xml:space="preserve">firefly bundler package</Description>
         <Icon>Icon.png</Icon>
 
