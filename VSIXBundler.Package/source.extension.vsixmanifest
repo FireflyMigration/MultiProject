@@ -1,15 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="VSIXBundler.Package.571da680-2721-47a3-bf7a-1d3bef21ab73" Version="1.1" Language="en-US" Publisher="kieron wray" />
+        <Identity Id="VSIXBundler.Package.571da680-2721-47a3-bf7a-1d3bef21ab73" Version="1.1" Language="en-US" Publisher="stickle" />
         <DisplayName>Firefly.VSIXBundler.Package</DisplayName>
         <Description xml:space="preserve">firefly bundler package</Description>
-        <Icon>Icon.png</Icon>
+        <MoreInfo>https://github.com/stickleprojects/MultiProject</MoreInfo>
+        <ReleaseNotes>index.html</ReleaseNotes>
+        <Icon>Resources\small.png</Icon>
 
-        <PreviewImage>Icon.png</PreviewImage>
+        <PreviewImage>Resources\Icon.png</PreviewImage>
     </Metadata>
     <Installation>
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0]" />
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0]" />
     </Installation>
     <Dependencies>
     </Dependencies>
