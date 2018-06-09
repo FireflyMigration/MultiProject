@@ -54,34 +54,35 @@ namespace VSIXBundler.Core.Installer
             IEnumerable<ExtensionEntry> toInstall = GetMissingExtensions(manager).Except(toUninstall);
 
             int actions = toUninstall.Count() + toInstall.Count();
-
             if (actions > 0)
             {
                 _progress = new Progress(actions);
 
                 await UninstallAsync(toUninstall, repository, manager, cancellationToken).ConfigureAwait(false);
-                await InstallAsync(toInstall, repository, manager, cancellationToken).ConfigureAwait(false);
+                var installationResult = await InstallAsync(toInstall, repository, manager, cancellationToken).ConfigureAwait(false);
 
                 _logger.Log(Environment.NewLine + _settings.ResourceProvider.InstallationComplete + Environment.NewLine);
-                Done?.Invoke(this, actions);
+                Done?.Invoke(this, installationResult);
             }
         }
 
-        private async Task InstallAsync(IEnumerable<ExtensionEntry> extensions, IVsExtensionRepository repository, IVsExtensionManager manager, CancellationToken token)
+        private async Task<InstallResult> InstallAsync(IEnumerable<ExtensionEntry> extensions, IVsExtensionRepository repository, IVsExtensionManager manager, CancellationToken token)
         {
             if (!extensions.Any() || token.IsCancellationRequested)
-                return;
+                return InstallResult.NothingToDo;
 
-            await Task.Run(() =>
+            return await Task.Factory.StartNew<InstallResult>(() =>
             {
+                var ret = new InstallResult();
                 try
                 {
                     foreach (ExtensionEntry extension in extensions)
                     {
                         if (token.IsCancellationRequested)
-                            return;
+                            return ret;
 
-                        InstallExtension(extension, repository, manager);
+                        var result = InstallExtension(extension, repository, manager);
+                        ret.AddResult(extension, result);
                     }
                 }
                 catch (Exception ex)
@@ -92,7 +93,9 @@ namespace VSIXBundler.Core.Installer
                 {
                     Store.Save();
                 }
-            }).ConfigureAwait(false);
+
+                return ret;
+            }, token).ConfigureAwait(false);
         }
 
         private async Task UninstallAsync(IEnumerable<ExtensionEntry> extensions, IVsExtensionRepository repository, IVsExtensionManager manager, CancellationToken token)
@@ -157,10 +160,10 @@ namespace VSIXBundler.Core.Installer
             return null;
         }
 
-        private void InstallExtension(ExtensionEntry extension, IVsExtensionRepository repository, IVsExtensionManager manager)
+        private RestartReason InstallExtension(ExtensionEntry extension, IVsExtensionRepository repository, IVsExtensionManager manager)
         {
             GalleryEntry entry = null;
-            OnUpdate(string.Format(_settings.ResourceProvider.InstallingExtension, extension.Name));
+            OnUpdate(string.Format("{0} ({1})", _settings.ResourceProvider.InstallingExtension, extension.Name));
 
             try
             {
@@ -190,7 +193,7 @@ namespace VSIXBundler.Core.Installer
                         _logger.Log("  " + _settings.ResourceProvider.Installing, false);
 #if !DEBUG || true
 
-                        manager.Install(installable, false);
+                        return manager.Install(installable, false);
 #else
                     Thread.Sleep(2000);
 #endif
@@ -216,6 +219,8 @@ namespace VSIXBundler.Core.Installer
                     Store.MarkInstalled(extension);
                 }
             }
+
+            return RestartReason.None;
         }
 
         private IEnumerable<ExtensionEntry> GetMissingExtensions(IVsExtensionManager manager)
@@ -241,6 +246,43 @@ namespace VSIXBundler.Core.Installer
 
         public event EventHandler<Progress> Update;
 
-        public event EventHandler<int> Done;
+        public event EventHandler<InstallResult> Done;
+    }
+
+    public class InstallResult
+    {
+        private List<AResult> _results = new List<AResult>();
+
+        public static InstallResult NothingToDo
+        {
+            get { return new InstallResult(); }
+        }
+
+        private class AResult
+        {
+            public ExtensionEntry Extension { get; }
+            public RestartReason Result { get; }
+
+            public AResult(ExtensionEntry extension, RestartReason result)
+            {
+                this.Extension = extension;
+                this.Result = result;
+            }
+        }
+
+        public bool Any
+        {
+            get { return _results.Any(); }
+        }
+
+        public bool MustRestart
+        {
+            get { return _results.Any(x => x.Result != RestartReason.None); }
+        }
+
+        public void AddResult(ExtensionEntry extension, RestartReason result)
+        {
+            _results.Add(new AResult(extension, result));
+        }
     }
 }

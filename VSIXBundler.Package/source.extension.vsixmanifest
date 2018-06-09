@@ -3,8 +3,9 @@
     <Metadata>
         <Identity Id="VSIXBundler.Package.571da680-2721-47a3-bf7a-1d3bef21ab73" Version="1.0" Language="en-US" Publisher="kieron wray" />
         <DisplayName>VSIXBundler.Package</DisplayName>
-        <Description xml:space="preserve">Empty VSIX Project.</Description>
+        <Description xml:space="preserve">firefly bundler package</Description>
         <Icon>Icon.png</Icon>
+
         <PreviewImage>Icon.png</PreviewImage>
     </Metadata>
     <Installation>
