@@ -42,11 +42,11 @@ namespace VSIXBundler.Package
     {
         public const string _packageGuid = "7D980AC4-E12E-48E4-9E7A-9EFD59B32AA9";
 
-        protected override async System.Threading.Tasks.Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
+        protected virtual System.Threading.Tasks.Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             var settings = new SettingsFactory().Create();
             InstallerService.Initialize(this, settings, getLogger(settings));
-            await InstallerService.RunAsync().ConfigureAwait(false);
+            return System.Threading.Tasks.Task.Run(() => InstallerService.RunAsync().ConfigureAwait(false));
         }
 
         private ILogger getLogger(ISettings settings)
