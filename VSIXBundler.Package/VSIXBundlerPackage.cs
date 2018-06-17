@@ -23,8 +23,8 @@ namespace VSIXBundler.Package
     {
         public string VSIXName = "Bundler";
 
-        //public Uri LiveFeedUrl = new Uri("https://raw.githubusercontent.com/stickleprojects/MultiProject/master/extensions.json");
-        public Uri LiveFeedUrl = new Uri("file://D://localGithub//MultiProject//extensions.json");
+        public Uri LiveFeedUrl = new Uri("https://raw.githubusercontent.com/stickleprojects/MultiProject/master/extensions.json");
+        //public Uri LiveFeedUrl = new Uri("file://D://localGithub//MultiProject//extensions.json");
 
         public string RegistrySubKey => VSIXName;
 
