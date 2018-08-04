@@ -148,8 +148,8 @@ namespace VSIXBundler.Core.Installer
             });
         }
 
-        //Checks the version of the extension on the VS Gallery and downloads it if necessary.
-        private IInstallableExtension FetchIfUpdated(IInstalledExtension extension, IVsExtensionRepository repository, GalleryEntry entry)
+        //Checks the version of the extension 
+        private bool NewerVersionExists(IInstalledExtension extension, IVsExtensionRepository repository, GalleryEntry entry)
         {
             var version = extension.Header.Version;
             var strNewVersion = repository.GetCurrentExtensionVersions("ExtensionManagerQuery", new List<string>() { extension.Header.Identifier }, 1033).Single();
@@ -157,17 +157,17 @@ namespace VSIXBundler.Core.Installer
 
             if (newVersion > version)
             {
-                var newestVersion = repository.Download(entry);
-                return newestVersion;
+                return true;
             }
 
-            return null;
+            return false;
         }
 
         private RestartReason InstallExtension(ExtensionEntry extension, IVsExtensionRepository repository, IVsExtensionManager manager)
         {
             GalleryEntry entry = null;
             OnUpdate(string.Format("{0} ({1})", _settings.ResourceProvider.InstallingExtension, extension.Name));
+            var ret = RestartReason.None;
 
             try
             {
@@ -179,10 +179,28 @@ namespace VSIXBundler.Core.Installer
                 if (entry != null)
                 {
                     _logger.Log(_settings.ResourceProvider.Ok); // Marketplace ok
+#if DEBUG
+                    var allInstalledExtensions = manager.GetInstalledExtensions().Select(x => x.Header).Skip(140).ToArray();
+                    var extensionsByAuthor = manager.GetInstalledExtensions().GroupBy(x => x.Header.Author).Select(y => new { y.Key, items = y }).ToArray();
+#endif
+                    var installed = manager.GetInstalledExtensions().SingleOrDefault(n => n.Header.Identifier == extension.Id);
+                    _logger.Log("  " + _settings.ResourceProvider.Verifying, false);
+                    IInstallableExtension installable = null;
 
-                    var installed = manager.GetInstalledExtensions().Where(n => n.Header.Identifier == extension.Id).SingleOrDefault();
-                    _logger.Log("  " + _settings.ResourceProvider.Downloading, false);
-                    IInstallableExtension installable = installed == null ? repository.Download(entry) : FetchIfUpdated(installed, repository, entry);
+                    if (installed != null)
+                    {
+                        if (NewerVersionExists(installed, repository, entry))
+                        {
+                            installed = null;
+                        }
+                    }
+                    _logger.Log("  " + _settings.ResourceProvider.Ok);
+                    if (installed == null)
+                    {
+                        _logger.Log("  " + _settings.ResourceProvider.Downloading, false);
+                        installable = repository.Download(entry);
+                        _logger.Log(_settings.ResourceProvider.Ok); // Download ok
+                    }
 
                     if (installable == null)
                     {
@@ -190,17 +208,10 @@ namespace VSIXBundler.Core.Installer
                     }
                     else
                     {
-#if !DEBUG || true
 
-#endif
-                        _logger.Log(_settings.ResourceProvider.Ok); // Download ok
                         _logger.Log("  " + _settings.ResourceProvider.Installing, false);
-#if !DEBUG || true
 
-                        return manager.Install(installable, false);
-#else
-                    Thread.Sleep(2000);
-#endif
+                        ret = manager.Install(installable, false);
                         _logger.Log(_settings.ResourceProvider.Ok); // Install ok
                     }
 
@@ -214,6 +225,7 @@ namespace VSIXBundler.Core.Installer
             catch (Exception e)
             {
                 _logger.Log(_settings.ResourceProvider.Failed);
+                _logger.Log("Failed to install package: " + e.Message);
                 Telemetry.Install(extension.Id, false);
             }
             finally
@@ -224,7 +236,7 @@ namespace VSIXBundler.Core.Installer
                 }
             }
 
-            return RestartReason.None;
+            return ret;
         }
 
         private IEnumerable<ExtensionEntry> GetMissingExtensions(IVsExtensionManager manager)
