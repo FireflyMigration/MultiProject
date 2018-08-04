@@ -180,7 +180,7 @@ namespace VSIXBundler.Core.Installer
                 {
                     _logger.Log(_settings.ResourceProvider.Ok); // Marketplace ok
 #if DEBUG
-                    var allInstalledExtensions = manager.GetInstalledExtensions().Select(x => x.Header).Skip(140).ToArray();
+
                     var extensionsByAuthor = manager.GetInstalledExtensions().GroupBy(x => x.Header.Author).Select(y => new { y.Key, items = y }).ToArray();
 #endif
                     var installed = manager.GetInstalledExtensions().SingleOrDefault(n => n.Header.Identifier == extension.Id);
