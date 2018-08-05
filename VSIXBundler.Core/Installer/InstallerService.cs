@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.ComponentModelHost;
+﻿using log4net;
+
+using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.ExtensionManager;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.TaskStatusCenter;
@@ -7,7 +9,7 @@ using System;
 
 using VSIXBundler.Core.Helpers;
 
-using ILogger = VSIXBundler.Core.Helpers.ILogger;
+using ILogger = VSIXBundler.Core.Logging.ILogger;
 using Tasks = System.Threading.Tasks;
 
 namespace VSIXBundler.Core.Installer
@@ -19,6 +21,7 @@ namespace VSIXBundler.Core.Installer
         private static AsyncPackage _package;
         private static ISettings _settings;
         private static ILogger _logger;
+        private static ILog _log = LogManager.GetLogger(typeof(InstallerService));
 
         public static Installer Installer
         {
@@ -27,6 +30,7 @@ namespace VSIXBundler.Core.Installer
 
         public static void Initialize(AsyncPackage package, ISettings settings, ILogger logger)
         {
+            _log.Debug("Initialise");
             _package = package;
             _settings = settings;
             _logger = logger;
@@ -42,6 +46,8 @@ namespace VSIXBundler.Core.Installer
             // This deletes feed.json and installer.log so it finds updates
             Reset();
 #endif
+
+            _log.Debug("Init completed");
         }
 
         public static async Tasks.Task ResetAsync()
@@ -58,25 +64,38 @@ namespace VSIXBundler.Core.Installer
 
         public static async Tasks.Task RunAsync()
         {
+            _log.Debug("RunAsync");
             bool hasUpdates = await Installer.CheckForUpdatesAsync();
 
             if (!hasUpdates)
             {
+                _log.Debug("Noupdates. Exiting");
                 return;
             }
 
             _hasShownProgress = false;
+
+            _log.Debug("Getting services");
 
             // Waits for MEF to initialize before the extension manager is ready to use
             await _package.GetServiceAsync(typeof(SComponentModel));
 
             var repository = await _package.GetServiceAsync(typeof(SVsExtensionRepository)) as IVsExtensionRepository;
             var manager = await _package.GetServiceAsync(typeof(SVsExtensionManager)) as IVsExtensionManager;
+            _log.Debug("services complete");
+
             Version vsVersion = VsHelpers.GetVisualStudioVersion();
 
+            _log.Debug("Setuptaskstatuscenter");
             _handler = await SetupTaskStatusCenter();
-            Tasks.Task task = Installer.RunAsync(vsVersion, repository, manager, _handler.UserCancellation);
+            _log.Debug("Setuptaskstatuscenter complete");
+
+            _log.Debug("running installer async");
+            var task = Installer.RunAsync(vsVersion, repository, manager, _handler.UserCancellation);
             _handler.RegisterTask(task);
+            await task;
+
+            _log.Debug("RunAsync complete");
         }
 
         private static async Tasks.Task<ITaskHandler> SetupTaskStatusCenter()

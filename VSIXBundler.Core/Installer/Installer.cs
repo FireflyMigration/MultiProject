@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.ExtensionManager;
+﻿using log4net;
+
+using Microsoft.VisualStudio.ExtensionManager;
 
 using System;
 using System.Collections.Generic;
@@ -9,7 +11,7 @@ using System.Threading.Tasks;
 
 using VSIXBundler.Core.Helpers;
 
-using ILogger = VSIXBundler.Core.Helpers.ILogger;
+using ILogger = VSIXBundler.Core.Logging.ILogger;
 
 namespace VSIXBundler.Core.Installer
 {
@@ -22,6 +24,7 @@ namespace VSIXBundler.Core.Installer
         private readonly ISettings _settings;
         private readonly ILogger _logger;
         private Progress _progress;
+        private ILog _log = LogManager.GetLogger(typeof(Installer));
 
         public Installer(LiveFeed feed, DataStore store, ISettings settings, ILogger logger)
         {
@@ -40,20 +43,14 @@ namespace VSIXBundler.Core.Installer
             var file = new FileInfo(LiveFeed.LocalCachePath);
             bool hasUpdates = false;
 
-            if (!file.Exists || file.LastWriteTime < DateTime.Now.AddDays(-_settings.UpdateIntervalDays))
-            {
-                hasUpdates = await LiveFeed.UpdateAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                await LiveFeed.ParseAsync().ConfigureAwait(false);
-            }
+            hasUpdates = await LiveFeed.UpdateAsync().ConfigureAwait(false);
 
             return hasUpdates;
         }
 
         public async Task RunAsync(Version vsVersion, IVsExtensionRepository repository, IVsExtensionManager manager, CancellationToken cancellationToken)
         {
+            _log.Debug("RunAsync started");
             IEnumerable<ExtensionEntry> toUninstall = GetExtensionsMarkedForDeletion(vsVersion);
             IEnumerable<ExtensionEntry> toInstall = GetMissingExtensions(manager).Except(toUninstall);
 
@@ -65,13 +62,21 @@ namespace VSIXBundler.Core.Installer
                 await UninstallAsync(toUninstall, repository, manager, cancellationToken).ConfigureAwait(false);
                 var installationResult = await InstallAsync(toInstall, repository, manager, cancellationToken).ConfigureAwait(false);
 
+                _log.Debug("Installation Completed ");
                 _logger.Log(Environment.NewLine + _settings.ResourceProvider.InstallationComplete + Environment.NewLine);
                 Done?.Invoke(this, installationResult);
             }
+            else
+            {
+                _log.Debug("No actions to do");
+            }
+            _log.Debug("RunAsync ended");
         }
+
 
         private async Task<InstallResult> InstallAsync(IEnumerable<ExtensionEntry> extensions, IVsExtensionRepository repository, IVsExtensionManager manager, CancellationToken token)
         {
+            _log.Debug("InstallAsync started");
             if (!extensions.Any() || token.IsCancellationRequested)
                 return InstallResult.NothingToDo;
 
@@ -91,7 +96,7 @@ namespace VSIXBundler.Core.Installer
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.Write(ex);
+                    _logger.Log("Error installing " + ex.Message);
                 }
                 finally
                 {
@@ -179,7 +184,7 @@ namespace VSIXBundler.Core.Installer
                 if (entry != null)
                 {
                     _logger.Log(_settings.ResourceProvider.Ok); // Marketplace ok
-#if DEBUG
+#if DEBUG || true
 
                     var extensionsByAuthor = manager.GetInstalledExtensions().GroupBy(x => x.Header.Author).Select(y => new { y.Key, items = y }).ToArray();
 #endif
@@ -226,6 +231,7 @@ namespace VSIXBundler.Core.Installer
             {
                 _logger.Log(_settings.ResourceProvider.Failed);
                 _logger.Log("Failed to install package: " + e.Message);
+                _log.Error(e);
                 Telemetry.Install(extension.Id, false);
             }
             finally
@@ -244,7 +250,7 @@ namespace VSIXBundler.Core.Installer
             IEnumerable<IInstalledExtension> installed = (IEnumerable<IInstalledExtension>)manager.GetInstalledExtensions();
             IEnumerable<ExtensionEntry> notInstalled = LiveFeed.Extensions.Where(ext => !installed.Any(ins => ins.Header.Identifier == ext.Id));
 
-            return notInstalled.Where(ext => !Store.HasBeenInstalled(ext.Id));
+            return notInstalled;
         }
 
         public IEnumerable<ExtensionEntry> GetExtensionsMarkedForDeletion(Version VsVersion)
