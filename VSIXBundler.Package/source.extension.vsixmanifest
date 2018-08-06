@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="VSIXBundler.Package" Version="1.4" Language="en-US" Publisher="Firefly" />
+        <Identity Id="VSIXBundler.Package" Version="1.5" Language="en-US" Publisher="Firefly" />
         <DisplayName>Visual Studio Extension Bundle</DisplayName>
         <Description xml:space="preserve">Firefly bundler package</Description>
         <MoreInfo>https://github.com/FireflyMigration/MultiProject</MoreInfo>
